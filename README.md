@@ -16,13 +16,45 @@ An Arduino (ESP32/ESP8266) publishes sensor data over MQTT. This bridge subscrib
 
 ## Data flow
 
+```mermaid
+flowchart LR
+    subgraph Edge["Edge devices"]
+        E1[ESP32 + BME280]
+        E2[ESP8266 sensor node]
+    end
+
+    B(["MQTT Broker<br/>topic: sensors/#"])
+
+    subgraph Bridge["mqtt-iot-bridge"]
+        P[Parse payload<br/>JSON or key:value]
+        BA[Batch buffer]
+    end
+
+    API[/REST API<br/>POST /readings/]
+    CSV[(log.csv)]
+
+    E1 -- publish --> B
+    E2 -- publish --> B
+    B -- subscribe --> P
+    P --> BA
+    BA -- forward --> API
+    BA -- append --> CSV
 ```
-ESP32 / ESP8266                MQTT Broker              Bridge                  API / CSV
-──────────────    publish      ─────────────  subscribe  ──────────  POST /readings/  ─────
-bme.read()    ──────────────►  sensors/#    ──────────►  parse       ───────────────► store
-                                                          batch
-                                                          └──────────────────────────► log.csv
-```
+
+---
+
+## Demo
+
+<!-- TODO: add demo GIF — record with terminalizer or OBS -->
+<!--
+  Recording instructions (for Kiril):
+  1. Start a local broker:  mosquitto -v
+  2. Flash arduino/mqtt_publisher.ino to an ESP32 (or use: mosquitto_pub -t sensors/esp32-01/data -m '{"temp":24.5,"hum":61.2}')
+  3. Record the terminal while running:  python bridge.py --broker localhost --log-file readings.csv --debug
+     terminalizer record mqtt-demo   →   terminalizer render mqtt-demo -o demo.gif
+  4. Drop demo.gif into assets/ and replace the line below.
+-->
+> _Demo GIF coming soon — bridge forwarding live ESP32 BME280 readings to the REST API._
 
 ---
 
